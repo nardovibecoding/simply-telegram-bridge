@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Claude Telegram Bridge — one-liner installer
-# curl -fsSL https://raw.githubusercontent.com/nardovibecoding/claude-telegram-bridge/main/install.sh | bash
+# Simply Telegram Bridge — one-liner installer
+# curl -fsSL https://raw.githubusercontent.com/nardovibecoding/simply-telegram-bridge/main/install.sh | bash
 set -euo pipefail
 
-INSTALL_DIR="$HOME/claude-telegram-bridge"
+INSTALL_DIR="$HOME/simply-telegram-bridge"
 
 RED='\033[0;31m' GREEN='\033[0;32m' YELLOW='\033[1;33m' CYAN='\033[0;36m' BOLD='\033[1m' NC='\033[0m'
 
 echo ""
 echo -e "${CYAN}${BOLD}"
 echo "  ╔══════════════════════════════════════╗"
-echo "  ║   Claude Telegram Bridge Installer    ║"
+echo "  ║   Simply Telegram Bridge Installer    ║"
 echo "  ║   Full Claude Code access via Telegram ║"
 echo "  ╚══════════════════════════════════════╝"
 echo -e "${NC}"
@@ -37,7 +37,7 @@ else
     exit 1
   fi
   echo -e "${GREEN}→ Cloning repository...${NC}"
-  git clone https://github.com/nardovibecoding/claude-telegram-bridge.git "$INSTALL_DIR"
+  git clone https://github.com/nardovibecoding/simply-telegram-bridge.git "$INSTALL_DIR"
 fi
 
 # --- Install dependencies ---
@@ -62,7 +62,16 @@ fi
 
 # Allowed users
 echo -e "${YELLOW}  Tip: find your Telegram user ID by messaging @userinfobot${NC}"
-read -rp "Allowed user IDs (comma-separated, blank = all): " ALLOWED_USERS
+read -rp "Allowed user IDs (comma-separated, required unless ALLOW_ALL_USERS=true): " ALLOWED_USERS
+read -rp "Allow all Telegram users? Type ALLOW to enable [deny all]: " ALLOW_ALL_REPLY
+ALLOW_ALL_USERS=false
+if [ "$ALLOW_ALL_REPLY" = "ALLOW" ]; then
+  ALLOW_ALL_USERS=true
+fi
+if [ -z "$ALLOWED_USERS" ] && [ "$ALLOW_ALL_USERS" != "true" ]; then
+  echo -e "${RED}✗ ALLOWED_USERS is required unless you explicitly type ALLOW.${NC}"
+  exit 1
+fi
 
 # Model
 echo ""
@@ -78,6 +87,7 @@ WORKING_DIR=${WORKING_DIR:-~}
 cat > "$INSTALL_DIR/.env" << ENVEOF
 BOT_TOKEN=$BOT_TOKEN
 ALLOWED_USERS=$ALLOWED_USERS
+ALLOW_ALL_USERS=$ALLOW_ALL_USERS
 MODEL=$MODEL
 WORKING_DIR=$WORKING_DIR
 ENVEOF
@@ -85,13 +95,13 @@ echo -e "${GREEN}→ Saved .env${NC}"
 
 # --- Done ---
 echo ""
-echo -e "${GREEN}${BOLD}✓ Claude Telegram Bridge installed!${NC}"
+echo -e "${GREEN}${BOLD}✓ Simply Telegram Bridge installed!${NC}"
 echo ""
 echo -e "  To start the bot:"
-echo -e "    ${CYAN}cd ~/claude-telegram-bridge && python3 bot.py${NC}"
+echo -e "    ${CYAN}cd ~/simply-telegram-bridge && python3 bot.py${NC}"
 echo ""
 echo -e "  To run in background:"
-echo -e "    ${CYAN}nohup python3 ~/claude-telegram-bridge/bot.py &${NC}"
+echo -e "    ${CYAN}nohup python3 ~/simply-telegram-bridge/bot.py &${NC}"
 echo ""
 echo -e "  Features: text, photos, documents, /cancel, rate limiting"
 echo -e "  Full Claude Code tool access via Telegram."

@@ -1,11 +1,11 @@
 <p align="center">
-  <h1 align="center">claude-telegram-bridge</h1>
-  <p align="center"><strong>Control Claude Code from Telegram — full tool access, streaming responses, from any device.</strong></p>
+  <h1 align="center">simply-telegram-bridge</h1>
+  <p align="center"><strong>Control Claude Code from Telegram with an allowlisted local bot.</strong></p>
 </p>
 
 <p align="center">
-  <a href="https://github.com/nardovibecoding/claude-telegram-bridge/stargazers">
-    <img src="https://img.shields.io/github/stars/nardovibecoding/claude-telegram-bridge?style=for-the-badge&color=orange" alt="Stars">
+  <a href="https://github.com/nardovibecoding/simply-telegram-bridge/stargazers">
+    <img src="https://img.shields.io/github/stars/nardovibecoding/simply-telegram-bridge?style=for-the-badge&color=orange" alt="Stars">
   </a>
   <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey?style=for-the-badge" alt="Platform">
@@ -21,21 +21,28 @@
 
 ---
 
-You're away from your Mac. An idea hits, or someone needs something urgently. You want Claude to just handle it — search the web, read a file, write code — without opening a terminal.
+## Problem
+
+You want to check on Claude Code from your phone without exposing a full remote
+shell or copying your private automation stack into a public repo.
+
+This template gives you a small local Telegram control surface for Claude Code.
+It keeps the bot local, requires an explicit allowlist by default, and leaves
+deployment choices to you.
 
 ## Install
 
 One command. Takes 60 seconds.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nardovibecoding/claude-telegram-bridge/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nardovibecoding/simply-telegram-bridge/main/install.sh | bash
 ```
 
-Clones the repo, installs dependencies, prompts for bot token + settings, writes `.env`. Just run `python3 bot.py` after.
+Clones the repo, installs dependencies, prompts for bot token + settings, writes `.env`. Just run `python3 bot.py` after. The installer requires `ALLOWED_USERS` unless you explicitly opt into `ALLOW_ALL_USERS=true`.
 
 **Prerequisites:**
 - Python 3.10+
-- [Claude Code CLI](https://claude.ai/claude-code) installed and authenticated
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
 - A Telegram bot token (from [@BotFather](https://t.me/BotFather))
 
 ---
@@ -43,7 +50,7 @@ Clones the repo, installs dependencies, prompts for bot token + settings, writes
 ## Quickstart
 
 ```bash
-export BOT_TOKEN="your_telegram_bot_token"
+export BOT_TOKEN="000000000:FAKE_TELEGRAM_BOT_TOKEN_FOR_LOCAL_TESTS"
 export ALLOWED_USERS="123456789"   # your Telegram user ID
 export WORKING_DIR="/path/to/project"
 export MODEL="sonnet"              # haiku | sonnet | opus
@@ -130,7 +137,7 @@ Cold start: ~6 s once. Subsequent messages: 2–3 s.
 
 1. Open [@BotFather](https://t.me/BotFather) in Telegram
 2. Send `/newbot` and follow the prompts
-3. Copy the token — looks like `123456789:ABCdef...`
+3. Copy the token. Public examples in this repo use fake token placeholders.
 
 ### 2. Find Your Telegram User ID
 
@@ -139,7 +146,7 @@ Message [@userinfobot](https://t.me/userinfobot) — it replies with your numeri
 ### 3. Configure Environment
 
 ```bash
-export BOT_TOKEN="123456789:ABCdef..."    # from BotFather
+export BOT_TOKEN="000000000:FAKE_TELEGRAM_BOT_TOKEN_FOR_LOCAL_TESTS"
 export ALLOWED_USERS="111222333"          # your user ID (comma-separated for multiple)
 export WORKING_DIR="$HOME/myproject"      # directory Claude operates in
 export MODEL="sonnet"                     # haiku | sonnet | opus
@@ -165,8 +172,8 @@ Or as a systemd service (Linux):
 Description=Claude Telegram Bridge
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/claude-telegram-bridge/bot.py
-EnvironmentFile=/opt/claude-telegram-bridge/.env
+ExecStart=/usr/bin/python3 /opt/simply-telegram-bridge/bot.py
+EnvironmentFile=/opt/simply-telegram-bridge/.env
 Restart=always
 
 [Install]
@@ -180,7 +187,8 @@ WantedBy=multi-user.target
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `BOT_TOKEN` | Yes | — | Telegram bot token from BotFather |
-| `ALLOWED_USERS` | No | (all users) | Comma-separated Telegram user IDs |
+| `ALLOWED_USERS` | Yes by default | empty | Comma-separated Telegram user IDs |
+| `ALLOW_ALL_USERS` | No | `false` | Set `true` only for a private test bot |
 | `WORKING_DIR` | No | `~` | Directory Claude operates in |
 | `MODEL` | No | `sonnet` | `haiku`, `sonnet`, or `opus` |
 | `SYSTEM_PROMPT` | No | `"You are a helpful coding assistant."` | System prompt for the session |
@@ -200,7 +208,7 @@ WantedBy=multi-user.target
 
 ## Security
 
-**ALLOWED_USERS is your first line of defense.** Set it to your Telegram user ID. Without it, anyone who finds your bot can execute shell commands on your machine.
+**ALLOWED_USERS is your first line of defense.** Set it to your Telegram user ID. If it is empty, this template denies all users unless `ALLOW_ALL_USERS=true`.
 
 ```bash
 # Single user
@@ -210,7 +218,7 @@ export ALLOWED_USERS="111222333"
 export ALLOWED_USERS="111222333,444555666"
 ```
 
-**What Claude can do:** The bot runs with `bypassPermissions` — Claude executes tools without confirmation prompts. This is intentional for speed, but means every allowed user has full shell access to the `WORKING_DIR`. Only grant access to users you trust completely.
+**What Claude can do:** The bot can execute Claude Code tools from the configured working directory. Only grant access to users you trust completely.
 
 **Credentials:** `BOT_TOKEN` and `ALLOWED_USERS` are env vars — never committed to git. Use a `.env` file locally and `EnvironmentFile` in systemd.
 
@@ -232,13 +240,13 @@ The SDK client maintains a single persistent connection per process. On disconne
 
 ## Battle-Tested
 
-Extracted from a production multi-bot Telegram system running 8 AI personas with 2 000+ daily messages. The bridge pattern has been running continuously for months in real use.
+This public template is intentionally smaller than a private production bot stack. It omits private deployment wiring, logs, runtime state, and operational workflows.
 
 ---
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=nardovibecoding/claude-telegram-bridge&type=Date)](https://star-history.com/#nardovibecoding/claude-telegram-bridge&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=nardovibecoding/simply-telegram-bridge&type=Date)](https://star-history.com/#nardovibecoding/simply-telegram-bridge&Date)
 
 ---
 

@@ -26,6 +26,7 @@ log = logging.getLogger("bridge")
 # ── Config from env ──────────────────────────────────────────────────
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 ALLOWED_USERS = {int(x) for x in os.environ.get("ALLOWED_USERS", "").split(",") if x.strip()}
+ALLOW_ALL_USERS = os.environ.get("ALLOW_ALL_USERS", "").lower() == "true"
 SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", "You are a helpful coding assistant.")
 WORKING_DIR = os.environ.get("WORKING_DIR", os.path.expanduser("~"))
 MODEL = os.environ.get("MODEL", "sonnet")
@@ -40,8 +41,8 @@ _rate_limits: dict[int, list[float]] = {}  # user_id -> list of timestamps
 
 
 def _auth(user_id: int) -> bool:
-    """Check if user is allowed. Empty ALLOWED_USERS = allow all."""
-    return not ALLOWED_USERS or user_id in ALLOWED_USERS
+    """Check if user is allowed. Empty ALLOWED_USERS denies by default."""
+    return user_id in ALLOWED_USERS or (ALLOW_ALL_USERS and not ALLOWED_USERS)
 
 
 def _check_rate_limit(user_id: int) -> int | None:
